@@ -1,21 +1,39 @@
+const root = document.documentElement;
 const header = document.querySelector("[data-header]");
-const menuButton = document.querySelector(".menu-button");
 const navigation = document.querySelector(".site-nav");
-const lightSections = [...document.querySelectorAll(".section")];
+const menuButton = document.querySelector(".menu-button");
+const themeButton = document.querySelector("[data-theme-toggle]");
+const themeMeta = document.querySelector('meta[name="theme-color"]');
+
+function applyTheme(theme) {
+  root.dataset.theme = theme;
+  themeButton.setAttribute(
+    "aria-label",
+    theme === "dark" ? "Switch to light theme" : "Switch to dark theme"
+  );
+  themeMeta.setAttribute("content", theme === "dark" ? "#0b1220" : "#f1f5f9");
+}
+
+const savedTheme = localStorage.getItem("impto-theme");
+applyTheme(savedTheme || "dark");
+
+themeButton.addEventListener("click", () => {
+  const nextTheme = root.dataset.theme === "dark" ? "light" : "dark";
+  applyTheme(nextTheme);
+  localStorage.setItem("impto-theme", nextTheme);
+});
 
 function closeMenu() {
   menuButton.setAttribute("aria-expanded", "false");
   navigation.classList.remove("open");
-  header.classList.remove("menu-active");
   document.body.classList.remove("menu-open");
 }
 
 menuButton.addEventListener("click", () => {
-  const willOpen = menuButton.getAttribute("aria-expanded") !== "true";
-  menuButton.setAttribute("aria-expanded", String(willOpen));
-  navigation.classList.toggle("open", willOpen);
-  header.classList.toggle("menu-active", willOpen);
-  document.body.classList.toggle("menu-open", willOpen);
+  const opening = menuButton.getAttribute("aria-expanded") !== "true";
+  menuButton.setAttribute("aria-expanded", String(opening));
+  navigation.classList.toggle("open", opening);
+  document.body.classList.toggle("menu-open", opening);
 });
 
 navigation.querySelectorAll("a").forEach((link) => link.addEventListener("click", closeMenu));
@@ -24,21 +42,9 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") closeMenu();
 });
 
-function updateHeader() {
-  const headerLine = window.scrollY + 38;
-  const overLightSection = lightSections.some((section) => {
-    const top = section.offsetTop;
-    const bottom = top + section.offsetHeight;
-    return headerLine >= top && headerLine < bottom;
-  });
-
-  header.classList.toggle("scrolled", window.scrollY > 24);
-  header.classList.toggle("on-light", overLightSection);
-}
-
-window.addEventListener("scroll", updateHeader, { passive: true });
-window.addEventListener("resize", updateHeader);
-updateHeader();
+window.addEventListener("resize", () => {
+  if (window.innerWidth > 850) closeMenu();
+});
 
 const revealObserver = new IntersectionObserver(
   (entries, observer) => {
